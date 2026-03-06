@@ -5,7 +5,7 @@
 class Tetris {
 public:
   static void begin() {
-    randomSeed(analogRead(A0));
+    randomSeed(analogRead(A5));
     initGrid();
     nextTetType = random(0, 7);
     spawnTetromino();

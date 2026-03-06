@@ -24,45 +24,19 @@ bool isPaused = false;
 void setup() {
   Engine::begin();
 
-  for (uint8_t fd = 0; fd < 50; fd++) {
-    Engine::drawSprite(&SPLASH_IMAGE_2[0][0], &SPLASH_PALETTE_2[0][0], 16, 16, 0, 0, true);
-
-    if (fd >= 15) {
-      Engine::drawSprite(&SPLASH_IMAGE_4[0][0], &SPLASH_PALETTE_4[0][0], 8, 8, 4, 4, true);
-    }
-
-    if (fd >= 13 && fd <= 15) {
-      Engine::drawSprite(&SPLASH_IMAGE_5[0][0], &SPLASH_PALETTE_5[0][0], 8, 8, 4, 4, true);
-    }
-
-    if (fd == 15) {
-        
-        Engine::beep(25, 880);   // A5
-        Engine::beep(25, 988);   // B5
-        Engine::beep(25, 1175);  // D6
-        Engine::beep(40, 1568);  // G6
-        delay(20);
-        
-    }
-
-    Engine::update(50);
-  }
+  
 
 
-  Rally::begin();
-  SpaceInvaders::begin();
-  Arkanoid::begin();
-  Tetris::begin();
-  PacMan::begin();
-  Gradius::begin();
-  Pong::begin();
-  RiverRaid::begin();
-  Frogger::begin();
+  initialize();
 
   Engine::cls();
 }
 
 void loop() {
+
+  if (Engine::getKeyX() && Engine::getKeyY()) {
+    initialize();
+  }
 
   if (!isPaused) {
     switch (currentGame) {
@@ -114,8 +88,48 @@ void loop() {
     }
   }
 
-  if (!isPaused && Engine::getKeyDownX()) {
+  if (!isPaused && Engine::getKeyUpX()) {
     Engine::cls();
     currentGame = (currentGame + 1) % 10;
   }
+
+  
+}
+
+void initialize() {
+
+  isPaused = false;
+  for (uint8_t fd = 0; fd < 50; fd++) {
+    Engine::drawSprite(&SPLASH_IMAGE_2[0][0], &SPLASH_PALETTE_2[0][0], 16, 16, 0, 0, true);
+
+    if (fd >= 15) {
+      Engine::drawSprite(&SPLASH_IMAGE_4[0][0], &SPLASH_PALETTE_4[0][0], 8, 8, 4, 4, true);
+    }
+
+    if (fd >= 13 && fd <= 15) {
+      Engine::drawSprite(&SPLASH_IMAGE_5[0][0], &SPLASH_PALETTE_5[0][0], 8, 8, 4, 4, true);
+    }
+
+    if (fd == 15) {
+        
+        Engine::beep(25, 880);   // A5
+        Engine::beep(25, 988);   // B5
+        Engine::beep(25, 1175);  // D6
+        Engine::beep(40, 1568);  // G6
+        delay(20);
+        
+    }
+
+    Engine::update(50);
+  }
+
+  Rally::begin();
+  SpaceInvaders::begin();
+  Arkanoid::begin();
+  Tetris::begin();
+  PacMan::begin();
+  Gradius::begin();
+  Pong::begin();
+  RiverRaid::begin();
+  Frogger::begin();
 }
