@@ -12,7 +12,7 @@
 #include "Pong.h"
 #include "RiverRaid.h"
 #include "Frogger.h"
-
+#include "Maze3D.h"
 
 #include "SplashScreens.h"
 
@@ -23,9 +23,6 @@ bool isPaused = false;
 
 void setup() {
   Engine::begin();
-
-  
-
 
   initialize();
 
@@ -67,6 +64,9 @@ void loop() {
       case 9:
         Frogger::update();
         break;
+      case 10:
+        Maze3D::update();
+        break;
     }
   } else {
     delay(50);
@@ -90,10 +90,8 @@ void loop() {
 
   if (!isPaused && Engine::getKeyUpX()) {
     Engine::cls();
-    currentGame = (currentGame + 1) % 10;
+    currentGame = (currentGame + 1) % 11;
   }
-
-  
 }
 
 void initialize() {
@@ -111,13 +109,12 @@ void initialize() {
     }
 
     if (fd == 15) {
-        
-        Engine::beep(25, 880);   // A5
-        Engine::beep(25, 988);   // B5
-        Engine::beep(25, 1175);  // D6
-        Engine::beep(40, 1568);  // G6
-        delay(20);
-        
+
+      Engine::beep(25, 880);   // A5
+      Engine::beep(25, 988);   // B5
+      Engine::beep(25, 1175);  // D6
+      Engine::beep(40, 1568);  // G6
+      delay(20);
     }
 
     Engine::update(50);
@@ -132,4 +129,5 @@ void initialize() {
   Pong::begin();
   RiverRaid::begin();
   Frogger::begin();
+  Maze3D::begin();
 }
