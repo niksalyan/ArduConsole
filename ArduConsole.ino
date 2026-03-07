@@ -31,7 +31,7 @@ void setup() {
 
 void loop() {
 
-  if (Engine::getKeyX() && Engine::getKeyY()) {
+  if (Engine::getKeySelect() && Engine::getKeyStart()) {
     initialize();
   }
 
@@ -74,7 +74,7 @@ void loop() {
   }
 
 
-  if (Engine::getKeyDownY()) {
+  if (Engine::getKeyDownStart()) {
     isPaused = !isPaused;
     // Short rapid beeps
     if (isPaused) {
@@ -88,9 +88,13 @@ void loop() {
     }
   }
 
-  if (!isPaused && Engine::getKeyUpX()) {
+  if (!isPaused && Engine::getKeyUpSelect()) {
     Engine::cls();
     currentGame = (currentGame + 1) % 11;
+  }
+
+  if (Engine::getKeyDownX()) {
+    Engine::mute = !Engine::mute;
   }
 }
 

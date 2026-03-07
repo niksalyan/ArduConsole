@@ -28,7 +28,7 @@ public:
 
     renderRoad();
     renderObstacles();
-    renderCar();
+    renderCar(carX, carY, jumping ? Engine::color(255,128,0) : Engine::color(255,255,255));
     renderHUD();
 
     Engine::toneMapSpeed(speedDelay);
@@ -103,7 +103,7 @@ private:
   static void checkCollisions() {
     int roadAtCar = road[carY];
     if (abs(carX - roadAtCar) > roadWidth / 2 && !jumping) crash();
-    if (rockY == carY && abs(rockX - carX) < 1 && !jumping) crash();
+    if (rockY == carY && abs(rockX - carX) < 3 && !jumping) crash();
     if (jumpY == carY && abs(jumpX - carX) < 1) {
       jumping = true;
       Engine::beep(40);
@@ -124,20 +124,22 @@ private:
   }
 
   static void renderObstacles() {
-    if (rockY >= 0) Engine::setPixel(rockX, rockY, Engine::color(120,120,120));
+    if (rockY >= 0) renderCar(rockX, rockY, Engine::color(255,0,0));
     if (jumpY >= 0) Engine::setPixel(jumpX, jumpY, Engine::color(255,180,0));
   }
 
-  static void renderCar() {
-    Engine::setPixel(carX, carY, jumping ? Engine::color(255,255,255) : Engine::color(255,0,0));
-    Engine::setPixel(carX, carY + 1, jumping ? Engine::color(255,255,255) : Engine::color(255,0,0));
+  static void renderCar(float x, float y, uint32_t carColor) {
+    Engine::drawBox(x - 1, y, 3, 1, carColor);
+    Engine::drawBox(x - 1, y + 2, 3, 1, carColor);
+    Engine::drawBox(x, y - 1, 1, 4, carColor);
   }
 
   static void renderHUD() {
-    for (int i = 0; i < min(16, stage); i++) Engine::setPixel(i, 0, Engine::color(0,255,0));
+    Engine::drawNumber3x4Right(15, 12, stage, Engine::green);
+    //for (int i = 0; i < min(16, stage); i++) Engine::setPixel(i, 0, Engine::color(0,255,0));
   }
 
-  static void crashAnimation() { if ((millis() / 100) % 2 == 0) renderCar(); }
+  static void crashAnimation() { if ((millis() / 100) % 2 == 0) renderCar(carX, carY, Engine::red); }
 
   static void updateStage() { if (++distance % 200 == 0) stage++; }
 

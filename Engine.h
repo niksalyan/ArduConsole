@@ -423,19 +423,25 @@ public:
 
   // --- Sound ---
   static void beep(int duration, int freq = 800) {
-    tone(BUZZ_PIN, freq);
+    if (!mute) {
+      tone(BUZZ_PIN, freq);
+    }
     delay(duration);
     noTone(BUZZ_PIN);
   }
 
   static void toneMapSpeed(int speedDelay) {
-    tone(BUZZ_PIN, map(speedDelay, 80, 25, 120, 600));
+    if (!mute) {
+      tone(BUZZ_PIN, map(speedDelay, 80, 25, 120, 600));
+    }
   }
 
   // --- Public color helper ---
   static uint32_t color(int r, int g, int b) {
     return pixels.Color(r, g, b);
   }
+
+  inline static bool mute = false;
 
   inline static uint32_t red = color(255, 0, 0);
   inline static uint32_t green = color(0, 255, 0);

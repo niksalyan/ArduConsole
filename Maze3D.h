@@ -37,23 +37,18 @@ static void begin()
         }
 
         if (timer <= 0) {
+            playLose();
             begin();
+            Engine::cls();
+            return;
         }
 
 
         if(goalReached)
         {
-            // renderWin();
-
-            
-            if(!winSoundPlayed)
-            {
-                playWin();
-                begin();
-                winSoundPlayed = true;
-            }
-
-            Engine::update(30);
+            playWin();
+            begin();
+            Engine::cls();
             return;
         }
 
@@ -133,7 +128,7 @@ private:
 
     static void playBump()
     {
-        tone(BUZZ_PIN, 40, 200);
+        Engine::beep(200, 40);
     }
 
     static void playWin()
@@ -145,13 +140,22 @@ private:
         Engine::beep(200, 784);
     }
 
+    static void playLose()
+    {
+        Engine::beep(180, 784);
+        delay(120);
+        Engine::beep(200, 523);
+        delay(120);
+        Engine::beep(260, 196);
+    }
+
     static uint8_t isWall(float x, float y)
     {
         int mx = (int)x;
         int my = (int)y;
 
         if (mx < 0 || my < 0 || mx >= MAP_W || my >= MAP_H)
-            return 99;
+            return 255;
 
         return pgm_read_byte(&map[my][mx]);
     }
@@ -160,11 +164,11 @@ private:
     {
         switch (cell)
         {
-            case 1: return Engine::color(255,128,0);
-            case 2: return Engine::color(128,255,0);
-            case 3: return Engine::color(0,64,255);
-            case 9: return Engine::color(255,255,128);
-            default: return Engine::color(0,0,255);
+            case 1: return Engine::color(255,190,0);
+            case 2: return Engine::color(0,0,255);
+            case 3: return Engine::color(255,0,0);
+            case 9: return Engine::color(0,255,0);
+            default: return Engine::color(255,0,0);
         }
     }
 
@@ -211,8 +215,8 @@ private:
 
             if(wallHeight > 16) wallHeight = 16;
 
-            int yStart = 8 - wallHeight/2;
-            int yEnd   = 8 + wallHeight/2;
+            int yStart = 7 - wallHeight/2;
+            int yEnd   = 7 + wallHeight/2;
 
             uint32_t base = getWallColor(hitCell);
 
@@ -288,7 +292,7 @@ private:
             }
         }
 
-        Engine::drawNumber3x4(0, 12, timer / 10, Engine::gray);
+        Engine::drawNumber3x4(0, 12, timer / 10, timer > 99 ? Engine::gray : Engine::red);
     }   
 
 };
@@ -296,46 +300,25 @@ private:
 
 const uint8_t Maze3D::map[21][32] PROGMEM =
 {
-  // Row 0
   {1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1},
-  // Row 1
   {1,0,0,0,2,0,0,1,0,3,0,0,1,0,0,0,2,0,0,1,0,0,3,0,0,1,0,0,2,0,0,1},
-  // Row 2
   {1,0,1,1,0,1,0,0,1,0,0,1,0,1,0,1,0,1,0,0,1,0,1,0,0,1,0,1,0,1,0,1},
-  // Row 3
   {1,0,0,0,0,0,0,0,0,0,2,0,0,0,0,0,0,0,0,0,0,0,0,3,0,0,0,0,0,0,0,1},
-  // Row 4
   {1,0,1,0,1,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1},
-  // Row 5
   {1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
-  // Row 6
   {1,1,0,1,0,1,1,0,1,0,1,0,1,0,1,0,1,0,1,1,0,1,0,1,0,1,0,1,0,1,1,1},
-  // Row 7
   {1,0,0,0,0,0,0,2,0,0,0,0,0,0,3,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
-  // Row 8
   {1,0,1,0,1,0,1,0,1,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1},
-  // Row 9
   {1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
-  // Row 10
   {1,0,1,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,1,0,1,1},
-  // Row 11
   {1,0,0,0,0,0,0,0,2,0,0,0,0,0,0,0,0,0,3,0,0,0,0,0,0,0,0,0,0,0,0,1},
-  // Row 12
   {1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,1},
-  // Row 13
   {1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
-  // Row 14
   {1,0,1,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,1,0,1,1},
-  // Row 15
   {1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,2,0,0,0,0,0,0,0,0,3,0,0,0,0,0,1},
-  // Row 16
   {1,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,1,1},
-  // Row 17
   {1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
-  // Row 18
   {1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,1},
-  // Row 19
   {1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,9},
-  // Row 20
   {1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1}
 };
