@@ -8,7 +8,7 @@
 #include "Arkanoid.h"
 #include "Tetris.h"
 #include "PacMan.h"
-#include "Gradius.h"
+#include "Gladius.h"
 #include "Pong.h"
 #include "RiverRaid.h"
 #include "Frogger.h"
@@ -53,7 +53,7 @@ void loop() {
         PacMan::update();
         break;
       case 5:
-        Gradius::update();
+        Gladius::update();
         break;
       case 7:
         Pong::update();
@@ -129,7 +129,7 @@ void initialize() {
   Arkanoid::begin();
   Tetris::begin();
   PacMan::begin();
-  Gradius::begin();
+  Gladius::begin();
   Pong::begin();
   RiverRaid::begin();
   Frogger::begin();

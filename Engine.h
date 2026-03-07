@@ -188,6 +188,36 @@ public:
       }
   }
 
+  static void drawStars(int x, int y, int w, int h,
+                      uint8_t density,
+                      uint32_t dimColor,
+                      uint32_t brightColor)
+  {
+    for (int iy = 0; iy < h; iy++) {
+      for (int ix = 0; ix < w; ix++) {
+
+        uint8_t lx = ix & 15;   // repeat every 16
+        uint8_t ly = iy & 15;
+
+        // stronger 2D hash
+        uint8_t r = lx * 197 + ly * 101;
+        r ^= r >> 3;
+        r ^= lx * 29;
+        r ^= ly * 71;
+        r *= 53;
+        r ^= r >> 4;
+
+        if (r < density)
+        {
+          if (r < (density >> 2))
+            setPixel(x + ix, y + iy, brightColor);
+          else
+            setPixel(x + ix, y + iy, dimColor);
+        }
+      }
+    }
+  }
+
   static void drawBricks(int x, int y, int w, int h, uint32_t brickColor, uint32_t mortarColor) {
       const int brickW = 4;
       const int brickH = 3;

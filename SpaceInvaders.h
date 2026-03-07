@@ -6,19 +6,52 @@ class SpaceInvaders {
 public:
 
   static void begin() {
+
+    score = 0;
+    level = 1;
+    gameOver = false;
+
     initPlayer();
     initEnemies();
+
     bulletsCount = 0;
     enemyBulletsCount = 0;
+
+    ufoX = -1;
   }
 
   static void update() {
+
+    if(gameOver)
+    {
+      renderGameOver();
+      Engine::update(80);
+
+      if(Engine::getKeyDownA())
+        begin();
+
+      return;
+    }
 
     updatePlayer();
     updateBullets();
     updateEnemyBullets();
     updateEnemies();
+    updateUFO();
+
     checkCollisions();
+
+    if(!enemiesAlive())
+    {
+      level++;
+      initEnemies();
+      bulletsCount = 0;
+      enemyBulletsCount = 0;
+
+      Engine::beep(80,1000);
+    }
+
+    bgPosition = (bgPosition + 1) % 16;
 
     render();
     Engine::update(frameDelay);
@@ -29,32 +62,27 @@ private:
   static const uint8_t W = 16;
   static const uint8_t H = 16;
 
-  // ---------- PLAYER ----------
-
+  // PLAYER
   inline static int8_t playerX;
   inline static const int8_t playerY = H-1;
 
-  // ---------- PLAYER BULLETS ----------
-
+  // PLAYER BULLETS
   static const uint8_t maxBullets = 4;
 
   inline static int8_t bulletsX[maxBullets];
   inline static int8_t bulletsY[maxBullets];
   inline static uint8_t bulletsCount = 0;
 
-  // ---------- ENEMY BULLETS ----------
-
+  // ENEMY BULLETS
   static const uint8_t maxEnemyBullets = 3;
 
   inline static int8_t enemyBulletsX[maxEnemyBullets];
   inline static int8_t enemyBulletsY[maxEnemyBullets];
   inline static uint8_t enemyBulletsCount = 0;
 
-  // ---------- ENEMIES ----------
-
+  // ENEMIES
   static const uint8_t enemyRows = 3;
 
-  // 6 invaders stored as bits
   inline static uint8_t enemyMask[enemyRows];
 
   inline static int8_t enemyOffsetX = 3;
@@ -63,12 +91,21 @@ private:
 
   inline static uint8_t enemyMoveCounter = 0;
 
-  // ---------- TIMING ----------
+  // UFO
+  inline static int8_t ufoX = -1;
 
+  // GAME STATE
+  inline static uint16_t score = 0;
+  inline static uint8_t level = 1;
+  inline static bool gameOver = false;
+  inline static int bgPosition = 0;
+
+  // TIMING
   static const uint8_t frameDelay = 70;
 
-  // ---------- INIT ----------
+  inline static uint8_t shootCooldown = 0;
 
+  // INIT
   static void initPlayer() {
     playerX = W/2;
   }
@@ -76,31 +113,34 @@ private:
   static void initEnemies() {
 
     for (uint8_t y=0;y<enemyRows;y++)
-      enemyMask[y] = 0b00111110; // 6 enemies
+      enemyMask[y] = 0b00111110;
 
     enemyOffsetX = 3;
     enemyOffsetY = 1;
     enemyDir = 1;
   }
 
-  // ---------- PLAYER ----------
-
+  // PLAYER
   static void updatePlayer() {
 
     playerX = constrain(playerX + Engine::getAxisX(),1,W-2);
 
-    if (Engine::getKeyDownA() && bulletsCount < maxBullets) {
+    if(shootCooldown>0)
+      shootCooldown--;
+
+    if (Engine::getKeyDownA() && shootCooldown==0 && bulletsCount < maxBullets) {
 
       bulletsX[bulletsCount] = playerX;
       bulletsY[bulletsCount] = playerY-1;
       bulletsCount++;
 
-      Engine::beep(20,1100);
+      shootCooldown = 4;
+
+      Engine::beep(10,1200);
     }
   }
 
-  // ---------- BULLETS ----------
-
+  // BULLETS
   static void updateBullets() {
 
     for (uint8_t i=0;i<bulletsCount;i++) {
@@ -108,6 +148,7 @@ private:
       bulletsY[i]--;
 
       if (bulletsY[i] < 0) {
+
         bulletsY[i] = bulletsY[--bulletsCount];
         bulletsX[i] = bulletsX[bulletsCount];
         i--;
@@ -115,8 +156,7 @@ private:
     }
   }
 
-  // ---------- ENEMY BULLETS ----------
-
+  // ENEMY BULLETS
   static void updateEnemyBullets() {
 
     for (uint8_t i=0;i<enemyBulletsCount;i++) {
@@ -124,6 +164,7 @@ private:
       enemyBulletsY[i]++;
 
       if (enemyBulletsY[i] >= H) {
+
         enemyBulletsY[i] = enemyBulletsY[--enemyBulletsCount];
         enemyBulletsX[i] = enemyBulletsX[enemyBulletsCount];
         i--;
@@ -131,13 +172,14 @@ private:
     }
   }
 
-  // ---------- ENEMY MOVEMENT ----------
-
+  // ENEMY MOVEMENT
   static void updateEnemies() {
 
     enemyMoveCounter++;
 
-    if (enemyMoveCounter < 8) return;
+    uint8_t speed = max(2, 8-level);
+
+    if (enemyMoveCounter < speed) return;
 
     enemyMoveCounter = 0;
 
@@ -153,13 +195,14 @@ private:
       enemyShoot();
     }
 
-    if (enemyOffsetY >= H-3) {
-      begin(); // game over
-    }
+    if(random(0,10)<2)
+      enemyShoot();
+
+    if (enemyOffsetY >= H-3)
+      gameOver = true;
   }
 
-  // ---------- ENEMY SHOOT ----------
-
+  // ENEMY SHOOT
   static void enemyShoot() {
 
     if (enemyBulletsCount >= maxEnemyBullets) return;
@@ -174,16 +217,41 @@ private:
         enemyBulletsY[enemyBulletsCount] = enemyOffsetY + y;
 
         enemyBulletsCount++;
+
+        Engine::beep(5,600);
         return;
       }
     }
   }
 
-  // ---------- COLLISIONS ----------
+  // UFO
+  static void updateUFO() {
 
+    if(ufoX==-1 && random(0,200)==0)
+      ufoX=0;
+
+    if(ufoX!=-1)
+    {
+      ufoX++;
+
+      if(ufoX>=W)
+        ufoX=-1;
+    }
+  }
+
+  // CHECK ENEMIES
+  static bool enemiesAlive()
+  {
+    for(uint8_t i=0;i<enemyRows;i++)
+      if(enemyMask[i])
+        return true;
+
+    return false;
+  }
+
+  // COLLISIONS
   static void checkCollisions() {
 
-    // player bullets -> enemies
     for (uint8_t b=0;b<bulletsCount;b++) {
 
       int bx = bulletsX[b] - enemyOffsetX;
@@ -199,58 +267,72 @@ private:
           bulletsY[b] = bulletsY[bulletsCount];
           b--;
 
-          Engine::beep(40,1400);
+          score+=10;
+
+          Engine::beep(30,1400);
         }
+      }
+
+      if(ufoX!=-1 && bulletsY[b]==0 && abs(bulletsX[b]-ufoX)<=1)
+      {
+        score+=50;
+        ufoX=-1;
+        Engine::beep(80,1800);
       }
     }
 
-    // enemy bullets -> player
     for (uint8_t i=0;i<enemyBulletsCount;i++) {
 
       if (enemyBulletsY[i]==playerY &&
           abs(enemyBulletsX[i]-playerX)<=1) {
 
-        Engine::beep(200,400);
-        delay(300);
-        begin();
+        Engine::beep(200,300);
+        gameOver = true;
         return;
       }
     }
   }
 
-  // ---------- RENDER ----------
-
+  // RENDER
   static void render() {
 
-    // PLAYER (3 pixels wide)
-    Engine::setPixel(playerX-1,playerY,Engine::color(0,255,0));
-    Engine::setPixel(playerX,playerY,Engine::color(0,255,0));
-    Engine::setPixel(playerX+1,playerY,Engine::color(0,255,0));
+    Engine::drawStars(0, bgPosition - 16, 16, 32, 30, Engine::color(0,0,4), Engine::color(0,0,8));
 
-    // PLAYER BULLETS
+    uint32_t playerColor = Engine::color(0, 255, 0);
+
+    Engine::setPixel(playerX,playerY - 1,playerColor);
+    Engine::drawBox(playerX - 1, playerY, 3, 1, playerColor);
+
     for(uint8_t i=0;i<bulletsCount;i++)
       Engine::setPixel(bulletsX[i],bulletsY[i],Engine::color(255,255,0));
 
-    // ENEMY BULLETS
     for(uint8_t i=0;i<enemyBulletsCount;i++)
       Engine::setPixel(enemyBulletsX[i],enemyBulletsY[i],Engine::color(255,0,255));
 
-    // ENEMIES
-    for(uint8_t y=0;y<enemyRows;y++) {
-
-      for(uint8_t x=0;x<6;x++) {
-
-        if(enemyMask[y]&(1<<x)) {
-
+    for(uint8_t y=0;y<enemyRows;y++)
+    {
+      for(uint8_t x=0;x<6;x++)
+      {
+        if(enemyMask[y]&(1<<x))
+        {
           int px = enemyOffsetX + x;
-          int py = enemyOffsetY + y;
+          int py = enemyOffsetY + y + ((millis()/300)%2);
 
           Engine::setPixel(px,py,Engine::color(255,0,0));
-
-          if((millis()/200)%2)
-            Engine::setPixel(px,py+1,Engine::color(255,60,0));
         }
       }
     }
+
+    if(ufoX!=-1)
+    {
+      Engine::setPixel(ufoX,0,Engine::color(255,255,255));
+      Engine::setPixel(ufoX+1,0,Engine::color(255,0,255));
+    }
+  }
+
+  static void renderGameOver()
+  {
+    for(int x=0;x<W;x++)
+      Engine::setPixel(x,H/2,Engine::color(255,0,0));
   }
 };

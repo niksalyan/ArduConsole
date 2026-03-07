@@ -38,7 +38,7 @@ The console currently includes the following games:
 | **Rally** | Retro top-down racing |
 | **Tetris** | Classic falling block puzzle |
 | **Pac-Man** | Maze chasing gameplay |
-| **Gradius** | Side-scrolling space shooter |
+| **Gladius** | Side-scrolling space shooter |
 | **Pong** | Classic paddle tennis |
 | **River Raid** | Fly through a dangerous river canyon |
 | **Frogger** | Help the frog cross the road and river |
