@@ -442,6 +442,7 @@ public:
   inline static uint32_t blue = color(0, 0, 255);
   inline static uint32_t yellow = color(255, 255, 0);
   inline static uint32_t white = color(255, 255, 255);
+  inline static uint32_t gray = color(128, 128, 128);
   inline static uint32_t black = color(0, 0, 0);
 
 private:
