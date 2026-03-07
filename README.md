@@ -42,6 +42,7 @@ The console currently includes the following games:
 | **Pong** | Classic paddle tennis |
 | **River Raid** | Fly through a dangerous river canyon |
 | **Frogger** | Help the frog cross the road and river |
+| **Maze3D** | Find exit from the maze |
 
 ---
 
