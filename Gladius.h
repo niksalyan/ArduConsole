@@ -6,8 +6,8 @@ class Gladius {
 public:
 
   static void begin() {
-    shipX = W/2;
-    shipY = H-1;
+    shipX = W/3;
+    shipY = H/2;
 
     shootCooldown = 0;
     score = 0;
@@ -81,6 +81,7 @@ private:
   static void updateInput()
   {
     shipX = constrain(shipX + Engine::getAxisX(),1,W-2);
+    shipY = constrain(shipY + Engine::getAxisY(),1,H-2);
 
     if(shootCooldown>0)
       shootCooldown--;
@@ -101,8 +102,8 @@ private:
     {
       if(bulletY[i]<0)
       {
-        bulletX[i]=shipX;
-        bulletY[i]=shipY-1;
+        bulletX[i]=shipX+1;
+        bulletY[i]=shipY;
         return;
       }
     }
@@ -114,9 +115,9 @@ private:
     {
       if(bulletY[i]>=0)
       {
-        bulletY[i]--;
+        bulletX[i]++;
 
-        if(bulletY[i]<0)
+        if(bulletX[i] >= W)
           bulletY[i] = -1;
       }
     }
@@ -128,30 +129,30 @@ private:
   {
     for(int i=0;i<maxEnemies;i++)
     {
-      enemyX[i]=random(0,W);
-      enemyY[i]=random(-10,0);
+      enemyX[i]=W + random(10);
+      enemyY[i]=random(1,H-2);
       enemyType[i]=random(0,2);
     }
   }
 
   static void moveEnemies()
   {
-    int speed = 1 + score/15;
+    int speed = 1 + score/20;
 
     for(int i=0;i<maxEnemies;i++)
     {
-      enemyY[i]+=speed;
+      enemyX[i] -= speed;
 
       if(enemyType[i]==1)
-        enemyX[i]+= (millis()/200)%3-1;
+        enemyY[i] += (millis()/200)%3-1;
 
-      enemyX[i]=constrain(enemyX[i],0,W-1);
+      enemyY[i] = constrain(enemyY[i],0,H-1);
 
-      if(enemyY[i]>=H)
+      if(enemyX[i] < 0)
       {
-        enemyX[i]=random(0,W);
-        enemyY[i]=random(-6,0);
-        enemyType[i]=random(0,2);
+        enemyX[i] = W + random(3);
+        enemyY[i] = random(1,H-2);
+        enemyType[i] = random(0,2);
       }
     }
   }
@@ -203,7 +204,7 @@ private:
     {
       for(int ix=0;ix<w;ix++)
       {
-        uint8_t lx = ix & 15;
+        uint8_t lx = (ix + (millis()>>4)) & 15;
         uint8_t ly = (iy + (millis()>>5)) & 15;
 
         uint8_t r = lx * 197 + ly * 101;
@@ -252,8 +253,6 @@ private:
 
     Engine::setPixel(shipX,shipY,pc);
     Engine::setPixel(shipX-1,shipY,pc);
-    Engine::setPixel(shipX+1,shipY,pc);
-    Engine::setPixel(shipX,shipY-1,pc);
   }
 
   static void renderGameOver()
