@@ -1,6 +1,7 @@
 #include <Arduino.h>
 #include <Adafruit_NeoPixel.h>
 #include "Engine.h"
+#include <EEPROM.h>
 
 
 #include "Rally.h"
@@ -16,12 +17,18 @@
 
 #include "SplashScreens.h"
 
+#define ADDR_LAST_GAME 80
+#define GAMES_COUNT 11
 
-int currentGame = 0;
+
+uint8_t currentGame = 0;
 bool isPaused = false;
+int saveCurrentGameCounter = 0;
 
 
 void setup() {
+  currentGame = EEPROM.read(ADDR_LAST_GAME);
+  currentGame = currentGame < GAMES_COUNT ? currentGame : 0;
   Engine::begin();
 
   initialize();
@@ -90,11 +97,17 @@ void loop() {
 
   if (!isPaused && Engine::getKeyUpSelect()) {
     Engine::cls();
-    currentGame = (currentGame + 1) % 11;
+    currentGame = (currentGame + 1) % GAMES_COUNT;
+    saveCurrentGameCounter = 0;
   }
 
   if (Engine::getKeyDownX()) {
     Engine::mute = !Engine::mute;
+  }
+
+  saveCurrentGameCounter = constrain(saveCurrentGameCounter + 1, 0, 200);
+  if (saveCurrentGameCounter == 199) {
+    EEPROM.update(ADDR_LAST_GAME, currentGame); 
   }
 }
 

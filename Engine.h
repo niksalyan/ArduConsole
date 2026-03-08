@@ -366,7 +366,7 @@ public:
     }
   }
   
-  static int getAxisX(int deadzone = 150) {
+  static int getAxisX() {
     int val = analogRead(JOY_PIN_X) - 512;
 
     if (val > deadzone) return 1;
@@ -374,7 +374,7 @@ public:
     return 0;
   }
 
-  static int getAxisY(int deadzone = 150) {
+  static int getAxisY() {
     int val = analogRead(JOY_PIN_Y) - 512;
 
     if (val > deadzone) return -1;  // Invert if needed
@@ -472,6 +472,7 @@ public:
   }
 
   inline static bool mute = false;
+  inline static int deadzone = 200;
 
   inline static uint32_t red = color(255, 0, 0);
   inline static uint32_t green = color(0, 255, 0);

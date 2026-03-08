@@ -332,7 +332,7 @@ private:
 
   static void renderGameOver()
   {
-    for(int x=0;x<W;x++)
-      Engine::setPixel(x,H/2,Engine::color(255,0,0));
+    Engine::drawText3x4(0, 3, "GAME", Engine::red);
+    Engine::drawText3x4(1, 8, "OVER", Engine::red);
   }
 };

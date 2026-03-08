@@ -146,6 +146,7 @@ private:
 
   // ---------------- LINE CLEAR ----------------
   static void clearLines() {
+    uint8_t clearedLines = 0;
     for (int8_t y = H - 1; y >= 0; y--) {
       bool full = true;
       for (uint8_t x = 0; x < W; x++)
@@ -158,10 +159,23 @@ private:
         for (uint8_t x = 0; x < W; x++)
           grid[0][x] = 0;
 
-        score += 1;
-        Engine::beep(150, 1500);
+        clearedLines++;
         y++;
       }
+    }
+    switch(clearedLines) {
+      case 3:
+        score += 5;
+        break;
+      case 4:
+        score += 10;
+        break;  
+      default:
+        score += clearedLines;
+        break;
+    }
+    if (clearedLines > 0) {
+      Engine::beep(150, 1500);
     }
   }
 
