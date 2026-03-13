@@ -143,8 +143,9 @@ This makes it easy to add new games.
 1. Console boots and shows a **splash screen animation**.
 2. All games are initialized.
 3. The main loop runs the **current selected game**.
-4. Press **X** to switch to the next game.
-5. Press **Y** to pause or resume gameplay.
+4. Press **Select** to switch to the next game.
+5. Press **Start** to pause or resume gameplay.
+6. Press **Select** and **Start** together to restart current game.
 
 ---
 
