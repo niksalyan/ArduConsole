@@ -18,7 +18,7 @@
 #include "SplashScreens.h"
 
 #define ADDR_LAST_GAME 80
-#define GAMES_COUNT 11
+#define GAMES_COUNT 10
 
 
 uint8_t currentGame = 0;
@@ -62,16 +62,16 @@ void loop() {
       case 5:
         Gladius::update();
         break;
-      case 7:
+      case 6:
         Pong::update();
         break;
-      case 8:
+      case 7:
         RiverRaid::update();
         break;
-      case 9:
+      case 8:
         Frogger::update();
         break;
-      case 10:
+      case 9:
         Maze3D::update();
         break;
     }

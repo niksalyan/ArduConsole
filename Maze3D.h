@@ -11,25 +11,25 @@ static const int MAP_H = 21;
 
 inline static float playerX;
 inline static float playerY;
-inline static float playerDir;
+inline static uint8_t playerAngle;
 inline static int timer;
 
 inline static bool goalReached;
 
 static const uint8_t map[MAP_H][MAP_W] PROGMEM;
+static const int16_t sinQ15Table[256] PROGMEM;
 
 static void begin()
 {
   playerX = 5.5;
   playerY = 3.5;
-  playerDir = 0;
+  playerAngle = 0;
   goalReached = false;
   timer = 999;
 }
 
     static void update()
     {
-        static bool winSoundPlayed = false;
         timer--;
 
         if (timer % 10 == 0) {
@@ -59,20 +59,35 @@ static void begin()
     }
 
 private:
+    static constexpr float q15ToFloat = 1.0f / 32768.0f;
+    // 256 steps around the circle: 1 step ≈ 2π/256 rad ≈ 0.02454 rad
+    static constexpr uint8_t turnStep = 4; // ~0.098 rad per input tick
+    static constexpr uint8_t fovUnits = 37; // ~0.9 rad
+
+    static inline float sinFast(uint8_t angle)
+    {
+        return (int16_t)pgm_read_word(&sinQ15Table[angle]) * q15ToFloat;
+    }
+
+    static inline float cosFast(uint8_t angle)
+    {
+        // cos(x) = sin(x + π/2) => +64 in 0..255 units
+        return sinFast((uint8_t)(angle + 64));
+    }
 
     static void handleInput()
     {
         // rotation
         if (Engine::getAxisX() == -1)
-            playerDir -= 0.1;
+            playerAngle -= turnStep;
 
         if (Engine::getAxisX() == 1)
-            playerDir += 0.1;
+            playerAngle += turnStep;
 
         float moveSpeed = 0.12;
 
-        float dx = cos(playerDir);
-        float dy = sin(playerDir);
+        float dx = cosFast(playerAngle);
+        float dy = sinFast(playerAngle);
 
         float nx = playerX;
         float ny = playerY;
@@ -90,12 +105,6 @@ private:
         {
             nx -= dx * moveSpeed;
             ny -= dy * moveSpeed;
-        }
-
-        if (Engine::getAxisY() == -1)
-        {
-            nx += dx * moveSpeed;
-            ny += dy * moveSpeed;
         }
 
         uint8_t wall = isWall(nx, ny);
@@ -174,24 +183,26 @@ private:
 
     static void render()
     {
-        const float FOV = 0.9;
+        const float step = 0.05f;
+        const float maxDist = 20.0f;
 
         for(int x=0;x<16;x++)
         {
-            float rayAngle = playerDir - FOV/2 + (FOV * x / 16.0);
+            uint8_t rayAngle = (uint8_t)(playerAngle - (fovUnits / 2) + (uint8_t)((fovUnits * x) / 16));
 
             float rayX = playerX;
             float rayY = playerY;
 
-            float step = 0.05;
-
             uint8_t hitCell = 0;
             float dist = 0;
 
-            while(dist < 20)
+            const float dirX = cosFast(rayAngle);
+            const float dirY = sinFast(rayAngle);
+
+            while(dist < maxDist)
             {
-                rayX += cos(rayAngle) * step;
-                rayY += sin(rayAngle) * step;
+                rayX += dirX * step;
+                rayY += dirY * step;
                 dist += step;
 
                 int mx = (int)rayX;
@@ -295,6 +306,42 @@ private:
         Engine::drawNumber3x4(0, 12, timer / 10, timer > 99 ? Engine::gray : Engine::red);
     }   
 
+};
+
+// Q15 sine lookup table: sin(2π*i/256) * 32767
+const int16_t Maze3D::sinQ15Table[256] PROGMEM = {
+       0,    804,   1608,   2410,   3212,   4011,   4808,   5602,
+    6393,   7179,   7962,   8739,   9512,  10278,  11039,  11793,
+   12539,  13279,  14010,  14732,  15446,  16151,  16846,  17530,
+   18204,  18868,  19519,  20159,  20787,  21403,  22005,  22594,
+   23170,  23731,  24279,  24811,  25329,  25832,  26319,  26790,
+   27245,  27683,  28105,  28510,  28898,  29268,  29621,  29956,
+   30273,  30571,  30852,  31113,  31356,  31580,  31785,  31971,
+   32137,  32285,  32412,  32521,  32609,  32678,  32728,  32757,
+   32767,  32757,  32728,  32678,  32609,  32521,  32412,  32285,
+   32137,  31971,  31785,  31580,  31356,  31113,  30852,  30571,
+   30273,  29956,  29621,  29268,  28898,  28510,  28105,  27683,
+   27245,  26790,  26319,  25832,  25329,  24811,  24279,  23731,
+   23170,  22594,  22005,  21403,  20787,  20159,  19519,  18868,
+   18204,  17530,  16846,  16151,  15446,  14732,  14010,  13279,
+   12539,  11793,  11039,  10278,   9512,   8739,   7962,   7179,
+    6393,   5602,   4808,   4011,   3212,   2410,   1608,    804,
+       0,   -804,  -1608,  -2410,  -3212,  -4011,  -4808,  -5602,
+   -6393,  -7179,  -7962,  -8739,  -9512, -10278, -11039, -11793,
+  -12539, -13279, -14010, -14732, -15446, -16151, -16846, -17530,
+  -18204, -18868, -19519, -20159, -20787, -21403, -22005, -22594,
+  -23170, -23731, -24279, -24811, -25329, -25832, -26319, -26790,
+  -27245, -27683, -28105, -28510, -28898, -29268, -29621, -29956,
+  -30273, -30571, -30852, -31113, -31356, -31580, -31785, -31971,
+  -32137, -32285, -32412, -32521, -32609, -32678, -32728, -32757,
+  -32767, -32757, -32728, -32678, -32609, -32521, -32412, -32285,
+  -32137, -31971, -31785, -31580, -31356, -31113, -30852, -30571,
+  -30273, -29956, -29621, -29268, -28898, -28510, -28105, -27683,
+  -27245, -26790, -26319, -25832, -25329, -24811, -24279, -23731,
+  -23170, -22594, -22005, -21403, -20787, -20159, -19519, -18868,
+  -18204, -17530, -16846, -16151, -15446, -14732, -14010, -13279,
+  -12539, -11793, -11039, -10278,  -9512,  -8739,  -7962,  -7179,
+   -6393,  -5602,  -4808,  -4011,  -3212,  -2410,  -1608,   -804,
 };
 
 

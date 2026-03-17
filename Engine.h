@@ -19,7 +19,6 @@
 
 #define MATRIX_SIZE 16
 
-#define LED_PIN 12
 #define MATRIX_WIDTH 16
 #define MATRIX_HEIGHT 16
 #define NUM_LEDS (MATRIX_WIDTH * MATRIX_HEIGHT)
@@ -65,7 +64,7 @@ public:
     pixels.setBrightness(fadeValue);
   }
 
-  static refresh() {
+  static void refresh() {
     pixels.show();
   }
 
