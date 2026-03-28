@@ -11,6 +11,7 @@ public:
     spawnTetromino();
     frameCounter = 0;
     score = 0;
+    // Music::play(SONG_MAIN, true); // true = looping
   }
 
   static void update() {
@@ -36,14 +37,25 @@ private:
   inline static uint8_t grid[H][W];
 
   inline static const uint8_t tetrominoes[7][4][4] PROGMEM = {
-    {{0,0,0,0},{1,1,1,1},{0,0,0,0},{0,0,0,0}}, // I
-    {{0,1,1,0},{0,1,1,0},{0,0,0,0},{0,0,0,0}}, // O
-    {{0,1,0,0},{1,1,1,0},{0,0,0,0},{0,0,0,0}}, // T
-    {{0,0,1,0},{1,1,1,0},{0,0,0,0},{0,0,0,0}}, // L
-    {{1,0,0,0},{1,1,1,0},{0,0,0,0},{0,0,0,0}}, // J
-    {{0,1,1,0},{1,1,0,0},{0,0,0,0},{0,0,0,0}}, // S
-    {{1,1,0,0},{0,1,1,0},{0,0,0,0},{0,0,0,0}}  // Z
+    { { 0, 0, 0, 0 }, { 1, 1, 1, 1 }, { 0, 0, 0, 0 }, { 0, 0, 0, 0 } },  // I
+    { { 0, 1, 1, 0 }, { 0, 1, 1, 0 }, { 0, 0, 0, 0 }, { 0, 0, 0, 0 } },  // O
+    { { 0, 1, 0, 0 }, { 1, 1, 1, 0 }, { 0, 0, 0, 0 }, { 0, 0, 0, 0 } },  // T
+    { { 0, 0, 1, 0 }, { 1, 1, 1, 0 }, { 0, 0, 0, 0 }, { 0, 0, 0, 0 } },  // L
+    { { 1, 0, 0, 0 }, { 1, 1, 1, 0 }, { 0, 0, 0, 0 }, { 0, 0, 0, 0 } },  // J
+    { { 0, 1, 1, 0 }, { 1, 1, 0, 0 }, { 0, 0, 0, 0 }, { 0, 0, 0, 0 } },  // S
+    { { 1, 1, 0, 0 }, { 0, 1, 1, 0 }, { 0, 0, 0, 0 }, { 0, 0, 0, 0 } }   // Z
   };
+
+  inline static const char SONG_MAIN[] PROGMEM =
+    "E2E2R2E2R2C2E2R2G4R4"
+"G2R4C2R2G2R2E2R2A2R2B2R2A#2A2"
+"G2E2G2A2R2F2G2R2E2C2D2B2R2"
+
+"C2R2G2R2E2R2A2R2B2R2A#2A2"
+"G2E2G2A2R2F2G2R2E2C2D2B2R2"
+
+"E2E2R2E2R2C2E2R2G4R4"
+"G2R4C2R2G2R2E2R2A2R2B2R2A#2A2";
 
   inline static int8_t tetX, tetY;
   inline static uint8_t tetType, tetRotation;
@@ -74,7 +86,7 @@ private:
     int8_t dy = Engine::getAxisY();
 
     if (dx != 0) moveTetromino(dx, 0);
-    if (Engine::getKeyDownB()) { // rotate counter
+    if (Engine::getKeyDownB()) {  // rotate counter
       rotateTetromino();
       rotateTetromino();
       rotateTetromino();
@@ -163,13 +175,13 @@ private:
         y++;
       }
     }
-    switch(clearedLines) {
+    switch (clearedLines) {
       case 3:
         score += 5;
         break;
       case 4:
         score += 10;
-        break;  
+        break;
       default:
         score += clearedLines;
         break;
@@ -183,15 +195,15 @@ private:
   static void render() {
     // --- vertical gray borders ---
     for (uint8_t y = 0; y < H; y++) {
-      Engine::setPixel(0, y, Engine::color(100, 100, 100));     // left border
-      Engine::setPixel(W + 1, y, Engine::color(100, 100, 100)); // right border
+      Engine::setPixel(0, y, Engine::color(100, 100, 100));      // left border
+      Engine::setPixel(W + 1, y, Engine::color(100, 100, 100));  // right border
     }
 
     // draw locked blocks
     for (uint8_t y = 0; y < H; y++)
       for (uint8_t x = 0; x < W; x++)
         if (grid[y][x])
-          Engine::setPixel(x + 1, y, Engine::color(255, 128, 0)); // +1 for left border
+          Engine::setPixel(x + 1, y, Engine::color(255, 128, 0));  // +1 for left border
 
     // draw current piece
     for (uint8_t y = 0; y < 4; y++)
@@ -200,7 +212,7 @@ private:
           int8_t px = tetX + x;
           int8_t py = tetY + y;
           if (px >= 0 && px < W && py >= 0 && py < H)
-            Engine::setPixel(px + 1, py, Engine::color(0, 255, 0)); // +1 for border
+            Engine::setPixel(px + 1, py, Engine::color(0, 255, 0));  // +1 for border
         }
 
     // draw next piece preview (outside main grid)

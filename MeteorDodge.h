@@ -76,7 +76,7 @@ private:
   static void updateInput() {
 
     if (gameOver) {
-      if (Engine::getKeyDownStart()) {
+      if (Engine::getKeyDownA()) {
         resetGame();
       }
       return;

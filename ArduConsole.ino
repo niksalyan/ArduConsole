@@ -73,10 +73,10 @@ void loop() {
         Frogger::update();
         break;
       case 9:
-        Maze3D::update();
+        MeteorDodge::update();
         break;
       case 10:
-        MeteorDodge::update();
+        Maze3D::update();
         break;
 
     }
@@ -151,6 +151,6 @@ void initialize() {
   Pong::begin();
   RiverRaid::begin();
   Frogger::begin();
-  Maze3D::begin();
   MeteorDodge::begin();
+  Maze3D::begin();
 }
