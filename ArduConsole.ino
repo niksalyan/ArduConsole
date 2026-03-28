@@ -14,11 +14,12 @@
 #include "RiverRaid.h"
 #include "Frogger.h"
 #include "Maze3D.h"
+#include "MeteorDodge.h"
 
 #include "SplashScreens.h"
 
 #define ADDR_LAST_GAME 80
-#define GAMES_COUNT 10
+#define GAMES_COUNT 11
 
 
 uint8_t currentGame = 0;
@@ -74,6 +75,10 @@ void loop() {
       case 9:
         Maze3D::update();
         break;
+      case 10:
+        MeteorDodge::update();
+        break;
+
     }
   } else {
     delay(50);
@@ -147,4 +152,5 @@ void initialize() {
   RiverRaid::begin();
   Frogger::begin();
   Maze3D::begin();
+  MeteorDodge::begin();
 }
