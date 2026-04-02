@@ -5,172 +5,201 @@
 class Music {
 public:
 
+  static const uint8_t CHANNEL_COUNT = 3;
+
   // --- INIT ---
-  static void begin(uint8_t buzzPin) {
-    _buzzPin = buzzPin;
-    pinMode(_buzzPin, OUTPUT);
+  static void begin() {}
+
+  // --- PLAY PER CHANNEL ---
+  static void play(uint8_t ch, const char* song, bool loop = false) {
+    Channel& c = _ch[ch];
+
+    c.song = song;
+    c.index = 0;
+    c.frameCounter = 0;
+    c.octaveShift = 0;
+    c.sharp = 0;
+    c.currentNote = 'C';
+    c.playing = 1;
+    c.loop = loop;
+    c.frequency = 0;
   }
 
-  // --- PLAY (PROGMEM) ---
-  static void play(const char* progmemSong, bool loop = false) {
-    _song = progmemSong;
-    _index = 0;
-    _frameCounter = 0;
-    _octaveShift = 0;
-    _sharp = false;
-    _currentNote = 'C';
-    _playing = true;
-    _loop = loop;
+  static void stop(uint8_t ch) {
+    _ch[ch].playing = 0;
+    _ch[ch].frequency = 0;
   }
 
-  static void stop() {
-    noTone(_buzzPin);
-    _playing = false;
+  static uint16_t getFrequency(uint8_t ch) {
+    return _ch[ch].frequency;
   }
 
-  static bool isPlaying() {
-    return _playing;
+  static uint8_t getChannelCount() {
+    return CHANNEL_COUNT;
   }
 
-  // --- UPDATE ---
-  static void update() {
-    if (!_playing) return;
-
-    if (_frameCounter > 0) {
-      _frameCounter--;
-      return;
+  // --- UPDATE (call per frame) ---
+  static void update(int buzzPin, int delayInterval) {
+    for (uint8_t i = 0; i < CHANNEL_COUNT; i++) {
+      updateChannel(_ch[i]);
     }
 
-    parseNext();
+    if (CHANNEL_COUNT > 0) {
+      for (int dl = 0; dl < delayInterval; dl += 10) {
+        uint16_t freq = getFrequency(dl % CHANNEL_COUNT);
+        if (freq > 0) {
+          tone(buzzPin, freq);
+        } else {
+          noTone(buzzPin);
+        }
+
+        delay(10);
+      }
+    } else {
+      delay(delayInterval);
+    }
   }
 
 private:
 
-  // --- STATE ---
-  inline static uint8_t _buzzPin = 0;
+  struct Channel {
+    const char* song;
+    uint16_t index;
 
-  inline static const char* _song = nullptr;
-  inline static int _index = 0;
-  inline static int _frameCounter = 0;
+    uint8_t frameCounter;
 
-  inline static int _octaveShift = 0;
-  inline static bool _sharp = false;
-  inline static bool _playing = false;
-  inline static bool _loop = false;
+    int8_t octaveShift;
+    uint8_t sharp;
+    uint8_t playing;
+    uint8_t loop;
 
-  inline static char _currentNote = 'C';
+    char currentNote;
+    uint16_t frequency;
+  };
 
-  // --- READ FROM PROGMEM ---
-  static char readChar(int index) {
-    return pgm_read_byte(&_song[index]);
+  inline static Channel _ch[CHANNEL_COUNT];
+
+  // --- TABLE ---
+  static const uint16_t baseFreq[7] PROGMEM;
+
+  // --- READ ---
+  static char readChar(const char* s, uint16_t i) {
+    return pgm_read_byte(&s[i]);
+  }
+
+  // --- UPDATE CHANNEL ---
+  static void updateChannel(Channel& c) {
+
+    if (!c.playing) return;
+
+    if (c.frameCounter) {
+      c.frameCounter--;
+      return;
+    }
+
+    parseNext(c);
   }
 
   // --- PARSER ---
-  static void parseNext() {
+  static void parseNext(Channel& c) {
 
     while (true) {
 
-      char c = readChar(_index++);
+      char ch = readChar(c.song, c.index++);
 
-      // END OF STRING
-      if (c == '\0') {
-        if (_loop) {
-          _index = 0;
+      if (!ch) {
+        if (c.loop) {
+          c.index = 0;
           continue;
-        } else {
-          stop();
-          return;
         }
+        c.playing = 0;
+        c.frequency = 0;
+        return;
       }
 
-      // skip spaces
-      if (c == ' ') continue;
+      // RESET OCTAVE
+      if (ch == ' ') {
+        c.octaveShift = 0;
+        continue;
+      }
 
       // NOTE
-      if (isNote(c)) {
-        _currentNote = c;
+      if (ch >= 'A' && ch <= 'G') {
+        c.currentNote = ch;
         continue;
       }
 
       // SHARP
-      if (c == '#') {
-        _sharp = true;
+      if (ch == '#') {
+        c.sharp = 1;
         continue;
       }
 
       // OCTAVE
-      if (c == '+') {
-        _octaveShift++;
+      if (ch == '+') {
+        c.octaveShift++;
         continue;
       }
 
-      if (c == '-') {
-        _octaveShift--;
+      if (ch == '-') {
+        c.octaveShift--;
         continue;
       }
 
       // REST
-      if (c == 'R') {
-        _currentNote = 'R';
+      if (ch == 'R') {
+        c.currentNote = 'R';
         continue;
       }
 
       // DURATION
-      if (isdigit(c)) {
-        int duration = c - '0';
-        if (duration <= 0) duration = 1;
+      if (ch >= '0' && ch <= '9') {
+        uint8_t d = ch - '0';
+        if (!d) d = 1;
 
-        playCurrent(duration);
+        playCurrent(c, d);
         return;
       }
     }
   }
 
-  // --- PLAY ---
-  static void playCurrent(int duration) {
+  // --- PLAY (SET FREQ ONLY) ---
+  static void playCurrent(Channel& c, uint8_t duration) {
 
-    _frameCounter = duration;
+    c.frameCounter = duration;
 
-    if (_currentNote == 'R') {
-      noTone(_buzzPin);
-      _sharp = false;
+    if (c.currentNote == 'R') {
+      c.frequency = 0;
+      c.sharp = 0;
       return;
     }
 
-    int freq = getFrequency(_currentNote, 4 + _octaveShift);
+    int freq = getFreq(c.currentNote, 4 + c.octaveShift);
 
-    if (_sharp) {
-      freq = (int)(freq * 1.05946f);
+    if (c.sharp) {
+      freq = (freq * 106) / 100;
     }
 
-    tone(_buzzPin, freq);
-
-    _sharp = false;
+    c.frequency = freq;
+    c.sharp = 0;
   }
 
-  // --- HELPERS ---
-  static bool isNote(char c) {
-    return (c >= 'A' && c <= 'G');
+  // --- FREQ ---
+  static int getFreq(char note, int8_t octave) {
+
+    uint8_t idx = note - 'C';
+    uint16_t freq = pgm_read_word(&baseFreq[idx]);
+
+    int8_t diff = octave - 4;
+
+    if (diff > 0) freq <<= diff;
+    else if (diff < 0) freq >>= (-diff);
+
+    return freq;
   }
+};
 
-  static int getFrequency(char note, int octave) {
-
-    int base[] = {261, 293, 329, 349, 392, 440, 493};
-    const char* names = "CDEFGAB";
-
-    for (int i = 0; i < 7; i++) {
-      if (names[i] == note) {
-
-        int freq = base[i];
-        int diff = octave - 4;
-
-        while (diff > 0) { freq *= 2; diff--; }
-        while (diff < 0) { freq /= 2; diff++; }
-
-        return freq;
-      }
-    }
-
-    return 0;
-  }
+// --- TABLE ---
+const uint16_t Music::baseFreq[7] PROGMEM = {
+  261, 293, 329, 349, 392, 440, 493
 };

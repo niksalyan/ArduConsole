@@ -9,17 +9,16 @@
 #include "Arkanoid.h"
 #include "Tetris.h"
 #include "PacMan.h"
-#include "Gladius.h"
 #include "Pong.h"
 #include "RiverRaid.h"
 #include "Frogger.h"
-#include "Maze3D.h"
 #include "MeteorDodge.h"
+#include "Maze3D.h"
 
 #include "SplashScreens.h"
 
 #define ADDR_LAST_GAME 80
-#define GAMES_COUNT 11
+#define GAMES_COUNT 10
 
 
 uint8_t currentGame = 0;
@@ -61,7 +60,7 @@ void loop() {
         PacMan::update();
         break;
       case 5:
-        Gladius::update();
+        MeteorDodge::update();
         break;
       case 6:
         Pong::update();
@@ -73,9 +72,6 @@ void loop() {
         Frogger::update();
         break;
       case 9:
-        MeteorDodge::update();
-        break;
-      case 10:
         Maze3D::update();
         break;
 
@@ -147,7 +143,6 @@ void initialize() {
   Arkanoid::begin();
   Tetris::begin();
   PacMan::begin();
-  Gladius::begin();
   Pong::begin();
   RiverRaid::begin();
   Frogger::begin();

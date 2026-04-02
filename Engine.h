@@ -1,6 +1,7 @@
 #pragma once
 #include <Arduino.h>
 #include <Adafruit_NeoPixel.h>
+#include "Music.h"
 
 
 // Pins and constants
@@ -44,6 +45,7 @@ public:
     pinMode(BTN_PIN_START, INPUT_PULLUP);
 
     pinMode(BUZZ_PIN, OUTPUT);
+    Music::begin();
   }
 
   static void cls() {
@@ -57,9 +59,14 @@ public:
 
     updateKeys();
 
+    
+    // Music::update(BUZZ_PIN, delayInterval);
+
+
     delay(delayInterval);
-    pixels.clear();
     noTone(BUZZ_PIN);
+    pixels.clear();
+    
     fadeValue = constrain(fadeValue + 10, 0, 128);
     pixels.setBrightness(fadeValue);
   }

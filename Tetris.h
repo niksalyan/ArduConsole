@@ -11,7 +11,9 @@ public:
     spawnTetromino();
     frameCounter = 0;
     score = 0;
-    // Music::play(SONG_MAIN, true); // true = looping
+    // Music::play(0, SONG_CH0, true); // true = looping
+    // Music::play(1, SONG_CH1, true); // true = looping
+    // Music::play(2, SONG_CH2, true); // true = looping
   }
 
   static void update() {
@@ -46,16 +48,41 @@ private:
     { { 1, 1, 0, 0 }, { 0, 1, 1, 0 }, { 0, 0, 0, 0 }, { 0, 0, 0, 0 } }   // Z
   };
 
-  inline static const char SONG_MAIN[] PROGMEM =
-    "E2E2R2E2R2C2E2R2G4R4"
-"G2R4C2R2G2R2E2R2A2R2B2R2A#2A2"
-"G2E2G2A2R2F2G2R2E2C2D2B2R2"
+// --- LEAD (Melody) ---
+inline static const char SONG_CH0[] PROGMEM =
+"C2E2G2C+2B2G2E2C2 "
+"D2F2A2D+2C+2A2F2D2 "
+"E2G2B2E+2D+2B2G2E2 "
+"C+2B2A2G2E2C2R2R2 "
 
-"C2R2G2R2E2R2A2R2B2R2A#2A2"
-"G2E2G2A2R2F2G2R2E2C2D2B2R2"
+"G2E2C2E2G2C+2B2G2 "
+"A2F2D2F2A2D+2C+2A2 "
+"B2G2E2G2B2E+2D+2B2 "
+"C+4R4";
 
-"E2E2R2E2R2C2E2R2G4R4"
-"G2R4C2R2G2R2E2R2A2R2B2R2A#2A2";
+// --- BASS (low + punchy) ---
+inline static const char SONG_CH1[] PROGMEM =
+"C4C4G3G3A3A3F3F3 "
+"D4D4A3A3B3B3G3G3 "
+"E4E4B3B3C4C4A3A3 "
+"C4C4G3G3C4C4R4R4 "
+
+"C4R4G3R4A3R4F3R4 "
+"D4R4A3R4B3R4G3R4 "
+"E4R4B3R4C4R4A3R4 "
+"C4R4R4R4";
+
+// --- HARMONY / ARPEGGIO (fast sparkle) ---
+inline static const char SONG_CH2[] PROGMEM =
+"C1E1G1C+1E1G1C+1E1 "
+"D1F1A1D+1F1A1D+1F1 "
+"E1G1B1E+1G1B1E+1G1 "
+"C+1G1E1C1G1E1C1R1 "
+
+"G1B1D+1G+1D+1B1G1D+1 "
+"A1C+1E+1A+1E+1C+1A1E+1 "
+"B1D+1F+1B+1F+1D+1B1F+1 "
+"C+2R2";
 
   inline static int8_t tetX, tetY;
   inline static uint8_t tetType, tetRotation;
