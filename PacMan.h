@@ -20,6 +20,9 @@ public:
     score = 0;
     frameCounter = 0;
 
+    powerMode = false;
+    powerTimer = 0;
+
     initDots();
     initGhosts();
   }
@@ -35,6 +38,12 @@ public:
       movePacMan();
       moveGhosts();
       checkCollisions();
+
+      // power mode timer
+      if (powerMode) {
+        if (powerTimer > 0) powerTimer--;
+        else powerMode = false;
+      }
     }
 
     render();
@@ -47,44 +56,32 @@ private:
   static const uint8_t H = 16;
   static const uint8_t frameDelay = 2;
 
-  // ---------- MAZE (FLASH) ----------
-
   static const uint8_t PROGMEM maze[H][W];
 
-  // ---------- DOTS (RAM bitmask) ----------
+  inline static uint16_t dots[H];
 
-  inline static uint16_t dots[H];   // 16 rows × 16 bits
+  // PACMAN
+  inline static int8_t pacX, pacY;
+  inline static int8_t dirX, dirY;
+  inline static int8_t wantDirX, wantDirY;
 
-  // ---------- PACMAN ----------
-
-  inline static uint8_t pacX;
-  inline static uint8_t pacY;
-
-  inline static int8_t dirX;
-  inline static int8_t dirY;
-
-  inline static int8_t wantDirX;
-  inline static int8_t wantDirY;
-
-  // ---------- GHOSTS ----------
-
+  // GHOSTS
   static const uint8_t ghostCount = 4;
-
-  inline static uint8_t ghostX[ghostCount];
-  inline static uint8_t ghostY[ghostCount];
-
+  inline static int8_t ghostX[ghostCount];
+  inline static int8_t ghostY[ghostCount];
   inline static int8_t ghostDirX[ghostCount];
   inline static int8_t ghostDirY[ghostCount];
 
-  // ---------- GAME ----------
-
-  inline static uint8_t score;
+  // GAME
+  inline static uint16_t score;
   inline static uint8_t frameCounter;
 
-  // ---------- INIT ----------
+  // POWER MODE
+  inline static bool powerMode;
+  inline static uint16_t powerTimer;
 
+  // INIT
   static void initDots() {
-
     for (uint8_t y = 0; y < H; y++) {
       dots[y] = 0;
 
@@ -94,14 +91,9 @@ private:
         }
       }
     }
-
-    // power pellets
-    dots[1] |= (1 << 14);
-    dots[14] |= (1 << 1);
   }
 
   static void initGhosts() {
-
     for (uint8_t i = 0; i < ghostCount; i++) {
       ghostX[i] = W - 2;
       ghostY[i] = H - 2 - i;
@@ -111,8 +103,7 @@ private:
     }
   }
 
-  // ---------- INPUT ----------
-
+  // INPUT
   static void updateInput() {
     int dx = Engine::getAxisX();
     int dy = Engine::getAxisY();
@@ -120,17 +111,15 @@ private:
     if (dx != 0) {
       wantDirX = dx;
       wantDirY = 0;
-    }
-    else if (dy != 0) {
+    } else if (dy != 0) {
       wantDirX = 0;
       wantDirY = dy;
     }
   }
-  // ---------- PACMAN ----------
 
+  // PACMAN
   static void movePacMan() {
 
-    // try to apply queued direction first
     int8_t tryX = pacX + wantDirX;
     int8_t tryY = pacY + wantDirY;
 
@@ -142,31 +131,47 @@ private:
     int8_t newX = pacX + dirX;
     int8_t newY = pacY + dirY;
 
-    if (!isWalkable(newX, newY))
-      return;
+    // tunnel wrap
+    if (newX < 0) newX = W - 1;
+    if (newX >= W) newX = 0;
+
+    if (!isWalkable(newX, newY)) return;
 
     pacX = newX;
     pacY = newY;
 
     if (hasDot(pacX, pacY)) {
 
+      bool isPower =
+        (pacX == 14 && pacY == 1) ||
+        (pacX == 1 && pacY == 14);
+
       removeDot(pacX, pacY);
       score++;
 
-      Engine::beep(15, 1200);
+      if (isPower) {
+        powerMode = true;
+        powerTimer = 80;
+      }
+
+      Engine::beep(10, 1200);
     }
   }
 
-  // ---------- GHOSTS ----------
-
+  // GHOSTS
   static void moveGhosts() {
 
     for (uint8_t g = 0; g < ghostCount; g++) {
 
+      if (random(0, 4) == 0) {
+        chooseGhostDirection(g);
+        continue;
+      }
+
       int8_t nx = ghostX[g] + ghostDirX[g];
       int8_t ny = ghostY[g] + ghostDirY[g];
 
-      if (!isWalkable(nx, ny) || random(0, 5) == 0) {
+      if (!isWalkable(nx, ny)) {
         chooseGhostDirection(g);
       } else {
         ghostX[g] = nx;
@@ -181,44 +186,62 @@ private:
       {1,0},{-1,0},{0,1},{0,-1}
     };
 
-    for (uint8_t i = 0; i < 10; i++) {
+    int best = 9999;
+    int bestDir = 0;
 
-      uint8_t r = random(0,4);
+    for (uint8_t i = 0; i < 4; i++) {
 
-      int8_t nx = ghostX[g] + dirs[r][0];
-      int8_t ny = ghostY[g] + dirs[r][1];
+      int8_t nx = ghostX[g] + dirs[i][0];
+      int8_t ny = ghostY[g] + dirs[i][1];
 
-      if (isWalkable(nx, ny)) {
+      if (!isWalkable(nx, ny)) continue;
 
-        ghostDirX[g] = dirs[r][0];
-        ghostDirY[g] = dirs[r][1];
+      int dist;
 
-        ghostX[g] = nx;
-        ghostY[g] = ny;
-        return;
+      if (powerMode) {
+        // run away
+        dist = - (abs(nx - pacX) + abs(ny - pacY));
+      } else {
+        // chase
+        dist = abs(nx - pacX) + abs(ny - pacY);
+      }
+
+      if (dist < best) {
+        best = dist;
+        bestDir = i;
       }
     }
+
+    ghostDirX[g] = dirs[bestDir][0];
+    ghostDirY[g] = dirs[bestDir][1];
+
+    ghostX[g] += ghostDirX[g];
+    ghostY[g] += ghostDirY[g];
   }
 
-  // ---------- COLLISIONS ----------
-
+  // COLLISIONS
   static void checkCollisions() {
 
     for (uint8_t g = 0; g < ghostCount; g++) {
 
       if (pacX == ghostX[g] && pacY == ghostY[g]) {
 
-        Engine::beep(200, 500);
-        delay(400);
+        if (powerMode) {
+          score += 10;
 
-        begin();
-        return;
+          ghostX[g] = W / 2;
+          ghostY[g] = H / 2;
+        } else {
+          Engine::beep(200, 500);
+          delay(400);
+          begin();
+          return;
+        }
       }
     }
   }
 
-  // ---------- DOTS ----------
-
+  // DOTS
   static bool hasDot(uint8_t x, uint8_t y) {
     return dots[y] & (1 << x);
   }
@@ -227,73 +250,111 @@ private:
     dots[y] &= ~(1 << x);
   }
 
-  // ---------- HELPERS ----------
-
+  // HELPERS
   static bool isWalkable(int8_t x, int8_t y) {
 
-    if (x < 0 || y < 0 || x >= W || y >= H)
-      return false;
+    if (x < 0 || x >= W) return true; // tunnels
+    if (y < 0 || y >= H) return false;
 
     return pgm_read_byte(&maze[y][x]) == 0;
   }
 
-  // ---------- RENDER ----------
-
+  // RENDER
   static void render() {
+
+    bool blink = (millis() / 300) % 2;
 
     for (uint8_t y = 0; y < H; y++) {
       for (uint8_t x = 0; x < W; x++) {
 
         if (pgm_read_byte(&maze[y][x]) == 1) {
 
-          Engine::setPixel(x, y, Engine::color(0,0,180));
+          Engine::setPixel(x, y, Engine::color(0, 0, 255));
 
         } else if (hasDot(x,y)) {
 
-          Engine::setPixel(x, y, Engine::color(255,120,0));
+          bool isPower =
+            (x == 14 && y == 1) ||
+            (x == 1 && y == 14);
+
+          if (isPower) {
+            if (blink)
+              Engine::setPixel(x, y, Engine::color(255,255,255));
+          } else {
+            Engine::setPixel(x, y, Engine::color(200,200,200));
+          }
 
         } else {
-
           Engine::setPixel(x, y, Engine::color(0,0,0));
         }
       }
     }
 
     // pacman
-    Engine::setPixel(pacX, pacY, Engine::color(255,255,0));
+    bool mouth = (millis() / 120) % 2;
+    Engine::setPixel(pacX, pacY,
+      mouth ? Engine::color(255,255,0)
+            : Engine::color(200,200,0));
 
-    // ghosts
+    // ghost colors
+    const uint32_t ghostColors[4] = {
+      Engine::color(255,0,0),
+      Engine::color(255,105,180),
+      Engine::color(0,255,255),
+      Engine::color(255,165,0)
+    };
+
     for (uint8_t g = 0; g < ghostCount; g++) {
 
-      Engine::setPixel(
-        ghostX[g],
-        ghostY[g],
-        Engine::color(255,0,0)
-      );
+      if (powerMode) {
+        Engine::setPixel(ghostX[g], ghostY[g], Engine::color(0,0,255));
+      } else {
+        Engine::setPixel(ghostX[g], ghostY[g], ghostColors[g]);
+      }
     }
+
+    // score
+    //Engine::drawNumber3x4(0, 0, score, Engine::color(255,255,255));
   }
 };
 
 
-// ---------- PACMAN MAZE ----------
-
+// MAZE
 const uint8_t PacMan::maze[H][W] PROGMEM = {
 
 {1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1},
-{1,0,0,0,0,0,1,0,0,1,0,0,0,0,0,1},
-{1,0,1,1,1,0,1,0,0,1,0,1,1,1,0,1},
-{1,0,1,0,0,0,0,0,0,0,0,0,0,1,0,1},
-{1,0,1,0,1,1,1,0,0,1,1,1,0,1,0,1},
-{1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
-{1,1,1,0,1,1,0,1,1,0,1,1,0,1,1,1},
-{1,0,0,0,0,0,0,1,1,0,0,0,0,0,0,1},
-{1,0,1,1,1,0,1,1,1,1,0,1,1,1,0,1},
-{1,0,0,0,1,0,0,0,0,0,0,1,0,0,0,1},
-{1,1,1,0,1,1,1,0,0,1,1,1,0,1,1,1},
-{1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
-{1,0,1,1,1,0,1,0,0,1,0,1,1,1,0,1},
-{1,0,0,0,0,0,1,0,0,1,0,0,0,0,0,1},
-{1,0,1,1,1,0,0,0,0,0,0,1,1,1,0,1},
-{1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1}
 
+{1,0,0,0,0,0,1,0,0,1,0,0,0,0,0,1},
+
+{1,0,1,1,1,0,1,0,0,1,0,1,1,1,0,1},
+
+{1,0,1,0,0,0,0,0,0,0,0,0,0,1,0,1},
+
+{1,0,1,0,1,1,1,0,0,1,1,1,0,1,0,1},
+
+{1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
+
+// --- tighter center ---
+{1,1,1,0,1,1,0,1,1,0,1,1,0,1,1,1},
+
+// --- tunnel row ---
+{0,0,0,0,0,0,0,1,1,0,0,0,0,0,0,0},
+
+// --- ghost lane (thin) ---
+{1,1,1,0,1,0,0,0,0,0,0,1,0,1,1,1},
+
+{1,0,0,0,1,0,1,1,1,1,0,1,0,0,0,1},
+
+// --- bottom flow ---
+{1,1,1,0,1,1,0,0,0,0,1,1,0,1,1,1},
+
+{1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
+
+{1,0,1,1,1,0,1,0,0,1,0,1,1,1,0,1},
+
+{1,0,0,0,0,0,1,0,0,1,0,0,0,0,0,1},
+
+{1,0,1,1,1,0,0,0,0,0,0,1,1,1,0,1},
+
+{1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1}
 };
