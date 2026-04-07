@@ -1,8 +1,7 @@
 #pragma once
 #include <Arduino.h>
-#include <FastLED.h>
-// #include "Music.h"
-//#include "ssd1306.h"
+#include <Adafruit_NeoPixel.h>
+#include "Music.h"
 
 
 // Pins and constants
@@ -31,8 +30,9 @@ public:
 
   // --- Initialization ---
   static void begin() {
-    FastLED.addLeds<WS2812, LED_PIN, GRB>(pixels, NUM_LEDS);
-    FastLED.setBrightness(0);
+    pixels.begin();
+    pixels.setBrightness(0);
+    pixels.show();
     pinMode(JOY_PIN_X, INPUT);
     pinMode(JOY_PIN_Y, INPUT);
 
@@ -43,45 +43,36 @@ public:
     pinMode(BTN_PIN_Z, INPUT_PULLUP);
     pinMode(BTN_PIN_SELECT, INPUT_PULLUP);
     pinMode(BTN_PIN_START, INPUT_PULLUP);
- 
 
     pinMode(BUZZ_PIN, OUTPUT);
-    // Music::begin();
-    
-    //ssd1306_128x32_i2c_init();
-    //ssd1306_clearScreen();
-    //ssd1306_setFixedFont(ssd1306xled_font6x8_AB);
-    
-    
-    //ssd1306_printFixed(0,  0, "HISCORE: 000000000000", STYLE_NORMAL);
-
-    //ssd1306_setFixedFont(courier_new_font11x16_digits);
-
-    //ssd1306_printFixed(8,  16, "01234567890", STYLE_NORMAL);
+    Music::begin();
   }
 
   static void cls() {
-    FastLED.clear();
-    FastLED.setBrightness(0);
-    FastLED.show();
+    pixels.clear();
+    pixels.setBrightness(0);
     fadeValue = 0;
   }
 
   static void update(int delayInterval) {
-    fadeValue = constrain(fadeValue + 10, 0, 128);
-    FastLED.setBrightness(fadeValue);
-    
-    FastLED.show();
-    FastLED.clear();
+    pixels.show();
+
     updateKeys();
+
+    
     // Music::update(BUZZ_PIN, delayInterval);
+
+
     delay(delayInterval);
     noTone(BUZZ_PIN);
+    pixels.clear();
     
+    fadeValue = constrain(fadeValue + 10, 0, 128);
+    pixels.setBrightness(fadeValue);
   }
 
   static void refresh() {
-    FastLED.show();
+    pixels.show();
   }
 
   static void updateKeys() {
@@ -137,7 +128,7 @@ public:
   }
 
   // --- Pixel Helpers ---
-  static void setPixel(int x, int y, CRGB color) {
+  static void setPixel(int x, int y, uint32_t color) {
     if (x < 0 || x >= MATRIX_SIZE || y < 0 || y >= MATRIX_SIZE) return;
 
     // Rotate 90° clockwise
@@ -148,11 +139,11 @@ public:
               ? (MATRIX_SIZE - 1 - rx + ry * MATRIX_SIZE)
               : (rx + ry * MATRIX_SIZE);
 
-    pixels[i] = color;
+    pixels.setPixelColor(i, color);
   }
 
     // --- Draw a filled rectangle ---
-  static void drawBox(int x, int y, int w, int h, CRGB color) {
+  static void drawBox(int x, int y, int w, int h, uint32_t color) {
     for (int iy = 0; iy < h; iy++) {
       for (int ix = 0; ix < w; ix++) {
         setPixel(x + ix, y + iy, color);
@@ -160,7 +151,7 @@ public:
     }
   }
 
-  static void drawRect(int x, int y, int w, int h, CRGB color) {
+  static void drawRect(int x, int y, int w, int h, uint32_t color) {
     for (int ix = 0; ix < w; ix++) {
       setPixel(x + ix, y, color);
       setPixel(x + ix, y + h - 1, color);
@@ -171,7 +162,7 @@ public:
     }
   }
 
-  static void drawCircleFilled(int cx, int cy, int r, CRGB color) {
+  static void drawCircleFilled(int cx, int cy, int r, uint32_t color) {
     for (int y = -r; y <= r; y++) {
       for (int x = -r; x <= r; x++) {
         if (x*x + y*y <= r*r)
@@ -180,7 +171,7 @@ public:
     }
   }
 
-  static void drawChecker(int x, int y, int w, int h, CRGB c1, CRGB c2) {
+  static void drawChecker(int x, int y, int w, int h, uint32_t c1, uint32_t c2) {
     for (int iy = 0; iy < h; iy++) {
       for (int ix = 0; ix < w; ix++) {
         if ((ix + iy) % 2 == 0)
@@ -191,10 +182,10 @@ public:
     }
   }
 
-  static void drawChecker2x(int x, int y, int w, int h, CRGB c1, CRGB c2) {
+  static void drawChecker2x(int x, int y, int w, int h, uint32_t c1, uint32_t c2) {
       for (int iy = 0; iy < h; iy += 2) {
           for (int ix = 0; ix < w; ix += 2) {
-              CRGB color = ((ix / 2 + iy / 2) % 2 == 0) ? c1 : c2;
+              uint32_t color = ((ix / 2 + iy / 2) % 2 == 0) ? c1 : c2;
               // fill 2x2 block
               for (int by = 0; by < 2; by++)
                   for (int bx = 0; bx < 2; bx++)
@@ -205,8 +196,8 @@ public:
 
   static void drawStars(int x, int y, int w, int h,
                       uint8_t density,
-                      CRGB dimColor,
-                      CRGB brightColor)
+                      uint32_t dimColor,
+                      uint32_t brightColor)
   {
     for (int iy = 0; iy < h; iy++) {
       for (int ix = 0; ix < w; ix++) {
@@ -233,7 +224,7 @@ public:
     }
   }
 
-  static void drawBricks(int x, int y, int w, int h, CRGB brickColor, CRGB mortarColor) {
+  static void drawBricks(int x, int y, int w, int h, uint32_t brickColor, uint32_t mortarColor) {
       const int brickW = 4;
       const int brickH = 3;
 
@@ -253,7 +244,7 @@ public:
       }
   }
 
-  static void drawPattern(int x, int y, int w, int h, const uint8_t* tile, int tileW, int tileH, CRGB color) {
+  static void drawPattern(int x, int y, int w, int h, const uint8_t* tile, int tileW, int tileH, uint32_t color) {
       for (int iy = 0; iy < h; iy++) {
           for (int ix = 0; ix < w; ix++) {
               int tx = ix % tileW;
@@ -264,7 +255,7 @@ public:
       }
   }
 
-  static void drawBorder(int x, int y, int w, int h, CRGB color) {
+  static void drawBorder(int x, int y, int w, int h, uint32_t color) {
       for (int ix = 0; ix < w; ix++) {
           setPixel(x + ix, y, color);
           setPixel(x + ix, y + h - 1, color);
@@ -275,7 +266,7 @@ public:
       }
   }
 
-  static void drawDigit3x4(int x, int y, int digit, CRGB color) {
+  static void drawDigit3x4(int x, int y, int digit, uint32_t color) {
     if (digit < 0 || digit > 9) return;
 
     for (int row = 0; row < 4; row++) {
@@ -289,7 +280,7 @@ public:
     }
   }
 
-  static void drawNumber3x4(int x, int y, int number, CRGB color) {
+  static void drawNumber3x4(int x, int y, int number, uint32_t color) {
     if (number == 0) {
       drawDigit3x4(x,y,0,color);
       return;
@@ -310,7 +301,7 @@ public:
     }
   }
 
-  static void drawNumber3x4Vertical(int x, int y, int number, CRGB color) {
+  static void drawNumber3x4Vertical(int x, int y, int number, uint32_t color) {
 
     if (number == 0) {
       drawDigit3x4(x, y, 0, color);
@@ -333,7 +324,7 @@ public:
     }
   }
 
-  static void drawNumber3x4Right(int x, int y, int number, CRGB color) {
+  static void drawNumber3x4Right(int x, int y, int number, uint32_t color) {
     if (number == 0) {
       drawDigit3x4(x - 2, y, 0, color); 
       return;
@@ -357,7 +348,7 @@ public:
     }
   }
 
-  static void drawText3x4(int x, int y, const char* text, CRGB color) {
+  static void drawText3x4(int x, int y, const char* text, uint32_t color) {
 
     while (*text) {
       char c = *text++;
@@ -482,15 +473,23 @@ public:
   }
 
   // --- Public color helper ---
-  static CRGB color(uint8_t r, uint8_t g, uint8_t b) {
-    return CRGB(r, g, b);
+  static uint32_t color(int r, int g, int b) {
+    return pixels.Color(r, g, b);
   }
 
   inline static bool mute = false;
   inline static int deadzone = 200;
 
+  inline static uint32_t red = color(255, 0, 0);
+  inline static uint32_t green = color(0, 255, 0);
+  inline static uint32_t blue = color(0, 0, 255);
+  inline static uint32_t yellow = color(255, 255, 0);
+  inline static uint32_t white = color(255, 255, 255);
+  inline static uint32_t gray = color(128, 128, 128);
+  inline static uint32_t black = color(0, 0, 0);
+
 private:
-  inline static CRGB pixels[NUM_LEDS];
+  static Adafruit_NeoPixel pixels;
   // --- Button state tracking ---
   inline static bool btnCurrStart = false, btnPrevStart = false;
   inline static bool btnCurrSelect = false, btnPrevSelect = false;
@@ -545,3 +544,5 @@ private:
   };
 };
 
+// Define the static Adafruit_NeoPixel instance
+Adafruit_NeoPixel Engine::pixels(MATRIX_SIZE* MATRIX_SIZE, LED_PIN, NEO_GRB + NEO_KHZ800);

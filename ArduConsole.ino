@@ -1,4 +1,5 @@
-
+#include <Arduino.h>
+#include <Adafruit_NeoPixel.h>
 #include "Engine.h"
 #include <EEPROM.h>
 
@@ -16,8 +17,7 @@
 
 #include "SplashScreens.h"
 
-#define ADDR_LAST_GAME 81
-#define ADDR_MUTED 82
+#define ADDR_LAST_GAME 80
 #define GAMES_COUNT 10
 
 
@@ -30,7 +30,6 @@ void setup() {
   currentGame = EEPROM.read(ADDR_LAST_GAME);
   currentGame = currentGame < GAMES_COUNT ? currentGame : 0;
   Engine::begin();
-  Engine::mute = EEPROM.read(ADDR_MUTED) == 1; 
 
   initialize();
 
@@ -43,7 +42,6 @@ void loop() {
     initialize();
   }
 
-  // currentGame = 3;
   if (!isPaused) {
     switch (currentGame) {
       case 0:
@@ -111,7 +109,6 @@ void loop() {
   saveCurrentGameCounter = constrain(saveCurrentGameCounter + 1, 0, 200);
   if (saveCurrentGameCounter == 199) {
     EEPROM.update(ADDR_LAST_GAME, currentGame); 
-    EEPROM.update(ADDR_MUTED, Engine::mute ? 1 : 0);
   }
 }
 

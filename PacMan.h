@@ -297,7 +297,7 @@ private:
             : Engine::color(200,200,0));
 
     // ghost colors
-    const CRGB ghostColors[4] = {
+    const uint32_t ghostColors[4] = {
       Engine::color(255,0,0),
       Engine::color(255,105,180),
       Engine::color(0,255,255),
