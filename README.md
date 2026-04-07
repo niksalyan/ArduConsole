@@ -100,7 +100,7 @@ The console currently includes the following games:
 
 # 🛠️ Libraries Used
 
-- **FastLED**
+- **Adafruit NeoPixel**
 
 Install via Arduino Library Manager.
 
