@@ -298,7 +298,7 @@ private:
 
     Engine::drawStars(0, bgPosition - 16, 16, 32, 30, Engine::color(0,0,4), Engine::color(0,0,8));
 
-    uint32_t playerColor = Engine::color(0, 255, 0);
+    CRGB playerColor = Engine::color(0, 255, 0);
 
     Engine::setPixel(playerX,playerY - 1,playerColor);
     Engine::drawBox(playerX - 1, playerY, 3, 1, playerColor);
@@ -332,7 +332,7 @@ private:
 
   static void renderGameOver()
   {
-    Engine::drawText3x4(0, 3, "GAME", Engine::red);
-    Engine::drawText3x4(1, 8, "OVER", Engine::red);
+    Engine::drawText3x4(0, 3, "GAME", CRGB::Red);
+    Engine::drawText3x4(1, 8, "OVER", CRGB::Red);
   }
 };

@@ -169,7 +169,7 @@ private:
         return pgm_read_byte(&map[my][mx]);
     }
 
-    static uint32_t getWallColor(uint8_t cell)
+    static CRGB getWallColor(uint8_t cell)
     {
         switch (cell)
         {
@@ -229,11 +229,11 @@ private:
             int yStart = 7 - wallHeight/2;
             int yEnd   = 7 + wallHeight/2;
 
-            uint32_t base = getWallColor(hitCell);
+            CRGB base = getWallColor(hitCell);
 
-            uint8_t rr = (base >> 16) & 255;
-            uint8_t gg = (base >> 8) & 255;
-            uint8_t bb = base & 255;
+            uint8_t rr = base.r;;
+            uint8_t gg = base.g;
+            uint8_t bb = base.b;
 
             // distance shading
             uint8_t shade = 255 - min(dist * 120, 240);
@@ -270,7 +270,7 @@ private:
                 bb *= 0.12;
             }
 
-            uint32_t color = Engine::color(rr,gg,bb);
+            CRGB color = Engine::color(rr,gg,bb);
 
             for(int y=0;y<16;y++)
             {
@@ -303,7 +303,7 @@ private:
             }
         }
 
-        Engine::drawNumber3x4(0, 12, timer / 10, timer > 99 ? Engine::gray : Engine::red);
+        Engine::drawNumber3x4(0, 12, timer / 10, timer > 99 ? CRGB::Gray : CRGB::Red);
     }   
 
 };

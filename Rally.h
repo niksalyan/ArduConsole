@@ -128,18 +128,18 @@ private:
     if (jumpY >= 0) Engine::setPixel(jumpX, jumpY, Engine::color(255,180,0));
   }
 
-  static void renderCar(float x, float y, uint32_t carColor) {
+  static void renderCar(float x, float y, CRGB carColor) {
     Engine::drawBox(x - 1, y, 3, 1, carColor);
     Engine::drawBox(x - 1, y + 2, 3, 1, carColor);
     Engine::drawBox(x, y - 1, 1, 4, carColor);
   }
 
   static void renderHUD() {
-    Engine::drawNumber3x4Right(15, 12, stage, Engine::green);
+    Engine::drawNumber3x4Right(15, 12, stage, CRGB::Green);
     //for (int i = 0; i < min(16, stage); i++) Engine::setPixel(i, 0, Engine::color(0,255,0));
   }
 
-  static void crashAnimation() { if ((millis() / 100) % 2 == 0) renderCar(carX, carY, Engine::red); }
+  static void crashAnimation() { if ((millis() / 100) % 2 == 0) renderCar(carX, carY, CRGB::Red); }
 
   static void updateStage() { if (++distance % 200 == 0) stage++; }
 

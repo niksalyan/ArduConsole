@@ -176,7 +176,7 @@ private:
   static void render() {
 
     // bg
-    Engine::drawBricks(1, 0, W, H, Engine::color(0,0,2), Engine::black);
+    Engine::drawBricks(1, 0, W, H, Engine::color(0,0,2), CRGB::Black);
 
     // Engine::drawText3x4(1, 4, "ARCA", Engine::color(0,0,7));
     // Engine::drawText3x4(1, 9, "NOID", Engine::color(0,0,7));
@@ -198,10 +198,10 @@ private:
 
     // Paddle
     for (uint8_t i = 0; i < paddleWidth; i++)
-      Engine::setPixel((int)paddleX + i + 1, paddleY, Engine::green);
+      Engine::setPixel((int)paddleX + i + 1, paddleY, CRGB::Green);
 
     // Ball
-    Engine::setPixel((int)ballX + 1, (int)ballY, Engine::white);
+    Engine::setPixel((int)ballX + 1, (int)ballY, CRGB::White);
 
 
     
@@ -215,7 +215,7 @@ private:
       temp /= 10;
 
       for (uint8_t d = 0; d < digit && d < H; d++)
-        Engine::setPixel(baseX + i, H - 1 - d, Engine::yellow);
+        Engine::setPixel(baseX + i, H - 1 - d, CRGB::Yellow);
     }
   }
 };
