@@ -2,11 +2,15 @@
 #include <Arduino.h>
 #include <Adafruit_NeoPixel.h>
 #include "Music.h"
-
+#include "TM1637Display.h"
 
 // Pins and constants
 #define LED_PIN 12
 #define BUZZ_PIN 11
+
+#define TM1637_DCLK 10
+#define TM1637_DIO 9
+
 #define JOY_PIN_X A0
 #define JOY_PIN_Y A1
 #define BTN_PIN_A 4
@@ -23,6 +27,7 @@
 #define MATRIX_WIDTH 16
 #define MATRIX_HEIGHT 16
 #define NUM_LEDS (MATRIX_WIDTH * MATRIX_HEIGHT)
+
 
 
 class Engine {
@@ -266,6 +271,63 @@ public:
       }
   }
 
+  static void setScoreDigits(int d1, int d2, int d3, int d4, bool dots = false) {
+    uint8_t segments[4];
+
+    segments[0] = (d1 >= 0 && d1 <= 9) ? digitToSegment[d1] : 0;
+    segments[1] = (d2 >= 0 && d2 <= 9) ? digitToSegment[d2] : 0;
+    segments[2] = (d3 >= 0 && d3 <= 9) ? digitToSegment[d3] : 0;
+    segments[3] = (d4 >= 0 && d4 <= 9) ? digitToSegment[d4] : 0;
+
+    if (dots) {
+      segments[1] |= 0b10000000; // middle colon/dots
+    }
+
+    scoreDisplay.setSegments(segments);
+  }
+
+  static void hideScore() {
+    setScoreDigits(-1, -1, -1, -1, false);
+  }
+
+  static void setScore1P(int value, bool dots = false) {
+    value = constrain(value, 0, 9999);
+
+    int d4 = value % 10;
+    int d3 = (value / 10) % 10;
+    int d2 = (value / 100) % 10;
+    int d1 = (value / 1000) % 10;
+
+    setScoreDigits(d1, d2, d3, d4, dots);
+  }
+
+  static void setScore2P(int p1score, int p2score) {
+    p1score = constrain(p1score, 0, 99);
+    p2score = constrain(p2score, 0, 99);
+
+    uint8_t segments[4];
+
+    // Split digits
+    int p1d2 = p1score % 10;
+    int p1d1 = p1score / 10;
+
+    int p2d2 = p2score % 10;
+    int p2d1 = p2score / 10;
+
+    // Player 1 (left side)
+    segments[0] = (p1score >= 10) ? digitToSegment[p1d1] : 0;              // blank if single digit
+    segments[1] = digitToSegment[p1d2];
+
+    // Player 2 (right side)
+    segments[2] = (p2score >= 10) ? digitToSegment[p2d1] : 0;              // blank if single digit
+    segments[3] = digitToSegment[p2d2];
+
+    // Always enable middle dots (colon)
+    segments[1] |= 0b10000000;
+
+    scoreDisplay.setSegments(segments);
+  }
+
   static void drawDigit3x4(int x, int y, int digit, uint32_t color) {
     if (digit < 0 || digit > 9) return;
 
@@ -490,6 +552,7 @@ public:
 
 private:
   static Adafruit_NeoPixel pixels;
+  static TM1637Display scoreDisplay;
   // --- Button state tracking ---
   inline static bool btnCurrStart = false, btnPrevStart = false;
   inline static bool btnCurrSelect = false, btnPrevSelect = false;
@@ -500,6 +563,19 @@ private:
   inline static bool btnCurrZ = false, btnPrevZ = false;
 
   inline static uint8_t fadeValue = 0;
+
+  inline static const uint8_t digitToSegment[] = {
+    0b00111111, // 0
+    0b00000110, // 1
+    0b01011011, // 2
+    0b01001111, // 3
+    0b01100110, // 4
+    0b01101101, // 5
+    0b01111101, // 6
+    0b00000111, // 7
+    0b01111111, // 8
+    0b01101111  // 9
+  };
   
   inline static const uint8_t font3x4[10][4] PROGMEM = {
     {0b111,0b101,0b101,0b111}, // 0
@@ -546,3 +622,4 @@ private:
 
 // Define the static Adafruit_NeoPixel instance
 Adafruit_NeoPixel Engine::pixels(MATRIX_SIZE* MATRIX_SIZE, LED_PIN, NEO_GRB + NEO_KHZ800);
+TM1637Display Engine::scoreDisplay(TM1637_DCLK, TM1637_DIO);
